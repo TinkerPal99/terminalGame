@@ -9,8 +9,7 @@ class Game:
         """
         The Game is a terminal based game with very rudimentary functions as well as a possibility to save the
         current progress.
-
-        :param start_screen_file: handover of a textfile that shows ascii-art for the game start up
+        :param: start_screen_file: handover of a textfile that shows ascii-art for the game start up
         """
         self.__startupScreen = start_screen_file
         self.__savefile = "ressources/save.json"
@@ -33,7 +32,10 @@ class Game:
         Terminal interaction to ask the player for a new name.
         :return: Terminal output
         """
-        playerinput = input("Welcome {} \nWould you like to set a new name? y/n \n".format(str(self.playerName)))
+        playerinput = self.get_player_choice("Welcome {} \nWould you like to set a new name? y/n \n"
+                                             .format(str(self.playerName)),
+                                             "string"
+                                             )
 
         if playerinput == "y":
             self.playerName = str(input("Please enter your new player name within one line. Any sign is allowed.\n"))
@@ -43,6 +45,35 @@ class Game:
         else:
             "InvalidInput - Please enter either `y` for `yes` or `n` for `no`."
             self.get_player_name()
+
+    def get_player_choice(self, text, return_type):
+        """
+        a handler for player input to normalize input and handle wrong input
+
+        :param text: text given when asking for input
+        :param return_type: expected type
+        :return:normalized player input
+        """
+        player_input = input(text)
+
+        if return_type == "numerical":
+            try:
+                player_input = int(player_input)
+            except ValueError:
+                raise InvalidPlayerInput(type_request=return_type, playerinput=player_input)
+
+        elif return_type == "string":
+            player_input = str(player_input)
+
+        elif return_type == "boolean":
+            if player_input == "y" or player_input == "yes":
+                player_input = True
+            elif player_input == "n" or player_input == "no":
+                player_input = False
+            else:
+                raise InvalidPlayerInput(type_request=return_type, playerinput=player_input)
+
+        return player_input
 
     def save_game(self):
         """
@@ -72,3 +103,25 @@ class Game:
             print("No Save File was found, starting a new game")
         except json.decoder.JSONDecodeError:
             print("Save file is badly corrupted. Starting a new save.")
+
+
+class InvalidPlayerInput(Exception):
+    """Raised when the player enters bullshit."""
+
+    def __init__(self, type_request, playerinput):
+        """
+
+        :param type_request: expected type of the input
+        :param playerinput: the entered data by the player
+        """
+        super().__init__("The player entered some bullshit data. \n  input: {input} \n  requested data type: {type}"
+                            .format(
+                                input=str(type(playerinput)) + ":" + str(playerinput),
+                                type=type_request
+                            )
+                        )
+
+
+if __name__ == "__main__":
+    test = Game("ressources/start.txt")
+    test.get_player_choice("test", "numerical")
